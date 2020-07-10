@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -53,6 +54,15 @@ func listen(addr, certFile, keyFile string) (net.Listener, error) {
 	}
 
 	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+
+	keylogfile := os.Getenv("SSLKEYLOGFILE")
+	if keylogfile != "" {
+		w, err := os.OpenFile(keylogfile, os.O_WRONLY|os.O_CREATE, 0600)
+		if err == nil {
+			config.KeyLogWriter = w
+		}
+	}
+
 	ln, err := tls.Listen("tcp", addr, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %v", err)
